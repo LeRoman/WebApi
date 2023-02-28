@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiRadency.Models;
@@ -27,10 +21,10 @@ namespace WebApiRadency.Controllers
 
         // GET: api/recommended
         [HttpGet("recommended")]
-       
+
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopBooks(string? order)
         {
-            return GetBooksItems(order).Result.Value.Where(x => x.Reviews > 10).OrderByDescending(x=>x.Rating).Take(10).ToList();
+            return GetBooksItems(order).Result.Value.Where(x => x.Reviews > 10).OrderByDescending(x => x.Rating).Take(10).ToList();
         }
 
         [HttpGet]
@@ -124,6 +118,8 @@ namespace WebApiRadency.Controllers
             }
 
             _context.BooksItems.Remove(book);
+            _context.RatingItems.Where(x => x.BookId == book.Id).Select(x => _context.RatingItems.Remove(x));
+            _context.ReviewItems.Where(x => x.BookId == book.Id).Select(x => _context.ReviewItems.Remove(x));
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -170,7 +166,6 @@ namespace WebApiRadency.Controllers
 
             return Ok(review);
         }
-
 
 
         private bool BookExists(int id)
