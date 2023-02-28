@@ -6,7 +6,6 @@ namespace WebApiRadency.Models
     {
         public readonly BooksDbContext? DbContext;
         
-
         public int Id { get; set; }
         public string? Title { get; set; }
 

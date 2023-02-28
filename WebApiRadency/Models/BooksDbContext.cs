@@ -8,7 +8,6 @@ namespace WebApiRadency.Models
 
     {
 
-
         public DbSet<Book> BooksItems { get; set; } = null!;
         public DbSet<Rating> RatingItems { get; set; } = null!;
 
@@ -17,8 +16,9 @@ namespace WebApiRadency.Models
         public BooksDbContext(DbContextOptions<BooksDbContext> options)
             : base(options)
         {
-           Database.EnsureCreated();
+            Database.EnsureCreated();
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Book>().HasData(new DataFaker().Faker(20));

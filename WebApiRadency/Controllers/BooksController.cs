@@ -30,7 +30,7 @@ namespace WebApiRadency.Controllers
        
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopBooks(string? order)
         {
-            return  GetBooksItems(order).Result.Value.Take(10).ToList();
+            return GetBooksItems(order).Result.Value.Where(x => x.Reviews > 10).OrderByDescending(x=>x.Rating).Take(10).ToList();
         }
 
         [HttpGet]
