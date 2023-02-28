@@ -21,7 +21,7 @@ namespace WebApiRadency.Models
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Book>().HasData(new DataFaker().Faker(10)); 
+            modelBuilder.Entity<Book>().HasData(new DataFaker().Faker(20));
         }
 
 

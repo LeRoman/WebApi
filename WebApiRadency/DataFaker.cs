@@ -20,17 +20,19 @@ namespace WebApiRadency
         public DataFaker()
         {
             faker = new Faker<Book>()
-                .RuleFor(u=>u.BookID,f=>f.Random.Byte())
+                .RuleFor(u=>u.Id,f=>f.Random.Int(1,9999))
                 .RuleFor(u => u.Author, f => f.PickRandom(authors))
                 .RuleFor(u => u.Title, f => f.PickRandom(titles))
                 .RuleFor(u=>u.Genre,f=>f.PickRandom(genres))
-                .RuleFor(u=>u.Content,f=>f.Random.Word()); 
+                .RuleFor(u => u.Content, f => f.Random.Words());
         }
 
         public Book[] Faker(int count)
         {
             return faker.Generate(count).ToArray();
         }
+
+
 
     }
 }

@@ -1,53 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiRadency.Models;
+using WebApiRadency.Models.DTO;
 
 namespace WebApiRadency.Controllers
 {
+    [Route("api")]
     [Route("api/[controller]")]
     [ApiController]
     public class BooksController : ControllerBase
     {
         private readonly BooksDbContext _context;
-
-        public BooksController(BooksDbContext context)
+        private readonly IMapper _mapper;
+        public BooksController(BooksDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        // GET: api/Books
-        //[HttpGet]
-        //public async Task<ActionResult<IEnumerable<Book>>> GetBooksItems()
-        //{
-        //    return await _context.BooksItems.ToListAsync();
-        //}
+        // GET: api/recommended
+        [HttpGet("recommended")]
+       
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopBooks(string? order)
+        {
+            return  GetBooksItems(order).Result.Value.Take(10).ToList();
+        }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Book>>> GetBooksItems(string? order)
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksItems(string? order)
         {
-
-
+            await Console.Out.WriteLineAsync(Request.Path.ToString());
             switch (order)
             {
                 case "title":
-                    return await _context.BooksItems.OrderBy(x => x.Title).ToListAsync();
+                    return await _context.BooksItems.OrderBy(x => x.Title).Select(x => _mapper.Map<BookDTO>(x))
+                        .ToListAsync();
 
                 case "author":
-                    return await _context.BooksItems.OrderBy(x => x.Author).ToListAsync();
-                
+                    return await _context.BooksItems.OrderBy(x => x.Author).Select(x => _mapper.Map<BookDTO>(x))
+                         .ToListAsync();
+
                 default:
-                    return await  _context.BooksItems.ToListAsync();
+                    return await _context.BooksItems.Select(x => _mapper.Map<BookDTO>(x)).ToListAsync();
             }
 
         }
         // GET: api/Books/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Book>> GetBook(int id)
+        public async Task<ActionResult<BookDetailsDTO>> GetBookDetails(int id)
         {
             var book = await _context.BooksItems.FindAsync(id);
 
@@ -56,7 +63,7 @@ namespace WebApiRadency.Controllers
                 return NotFound();
             }
 
-            return book;
+            return _mapper.Map<BookDetailsDTO>(book);
         }
 
         // PUT: api/Books/5
@@ -64,7 +71,7 @@ namespace WebApiRadency.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBook(int id, Book book)
         {
-            if (id != book.BookID)
+            if (id != book.Id)
             {
                 return BadRequest();
             }
@@ -92,14 +99,18 @@ namespace WebApiRadency.Controllers
 
         // POST: api/Books
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost("save")]
         public async Task<ActionResult<Book>> PostBook([FromBody] Book book)
         {
-
+            if (book.Id != 0 && BookExists(book.Id))
+            {
+                await PutBook(book.Id, book);
+                return Ok(new { id = book.Id });
+            }
             _context.BooksItems.Add(book);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetBook", new { id = book.BookID }, book);
+            return Ok(new { id = book.Id });
         }
 
         // DELETE: api/Books/5
@@ -118,9 +129,53 @@ namespace WebApiRadency.Controllers
             return NoContent();
         }
 
+        [HttpPut("{id}/rate")]
+        public async Task<IActionResult> RateBook([FromBody] RatingInputDTO rate)
+
+        {
+            var id = Convert.ToInt32(Request.Path.ToString().Split('/')[3]);
+            var book = await _context.BooksItems.FindAsync(id);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            var rateItem = _mapper.Map<Rating>(rate);
+            rateItem.BookId = id;
+            rateItem.Book = book;
+
+            _context.RatingItems.Add(rateItem);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/review")]
+        public async Task<IActionResult> ReviewBook([FromBody] ReviewInputDTO review)
+
+        {
+            var id = Convert.ToInt32(Request.Path.ToString().Split('/')[3]);
+            var book = await _context.BooksItems.FindAsync(id);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            var reviewItem = _mapper.Map<Review>(review);
+            reviewItem.BookId = id;
+            reviewItem.Book = book;
+
+            _context.ReviewItems.Add(reviewItem);
+            await _context.SaveChangesAsync();
+
+            return Ok(review);
+        }
+
+
+
         private bool BookExists(int id)
         {
-            return _context.BooksItems.Any(e => e.BookID == id);
+            return _context.BooksItems.Any(e => e.Id == id);
         }
     }
 }

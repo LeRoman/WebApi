@@ -1,9 +1,14 @@
-﻿namespace WebApiRadency.Models
+﻿using Newtonsoft.Json;
+
+namespace WebApiRadency.Models
 {
+    
     public class Review
     {
         public int Id { get; set; }
+        
         public int BookId { get; set; }
+        
         public Book Book { get; set; }  
 
         public string Message { get; set; }
